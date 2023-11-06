@@ -201,6 +201,30 @@ pub enum Endian {
     Native,
 }
 
+impl Endian {
+    /// Return an [`Endian::Big`] or [`Endian::Little`] accordingly.
+    pub fn canonical(self) -> Self {
+        match self {
+            Endian::Little => Endian::Little,
+            Endian::Big | Endian::Network => Endian::Big,
+            #[cfg(target_endian = "big")]
+            Endian::Native => Endian::Big,
+            #[cfg(target_endian = "little")]
+            Endian::Native => Endian::Little,
+        }
+    }
+    /// Returns true if [`Endian::Big`], [`Endian::Network`], or if [`Endian::Native`]
+    /// and on a big-endian processor.
+    pub fn is_big(&self) -> bool {
+        matches!(self.canonical(), Endian::Big)
+    }
+    /// Returns true if [`Endian::Little`], or if [`Endian::Native`]
+    /// and on a little-endian processor.
+    pub fn is_little(&self) -> bool {
+        matches!(self.canonical(), Endian::Little)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
