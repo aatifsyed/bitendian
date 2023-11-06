@@ -3,9 +3,9 @@
 Convenience methods for encoding and decoding numbers in either big-endian
 or little-endian.
 
-Primitive integers implement [`ByteOrder`](https://docs.rs/byteorder2/latest/byteorder2/trait.ByteOrder.html).
+Primitive integers implement [`ByteOrder`](https://docs.rs/bitendian/latest/bitendian/trait.ByteOrder.html).
 ```rust
-use byteorder2::ByteOrder;
+use bitendian::ByteOrder;
 
 let it: u16 = 256;
 assert_eq!(ByteOrder::to_be_bytes(it), [1, 0]);
@@ -14,7 +14,7 @@ assert_eq!(ByteOrder::to_le_bytes(it), [0, 1]);
 
 Extension methods provide convenient readers and writers.
 ```rust
-use byteorder2::{io::WriteExt as _, tokio::AsyncReadExt as _};
+use bitendian::{io::WriteExt as _, tokio::AsyncReadExt as _};
 
 let mut buf = vec![];
 buf.write_be(1u16)?;
@@ -26,7 +26,7 @@ assert_eq!(256u16, swapped);
 - This crate leverages type inference to avoid [defining dozens of e.g write_uXX methods].
   ```rust
   use byteorder::{ReadBytesExt as _, BE, LE};
-  use byteorder2::io::ReadExt as _;
+  use bitendian::io::ReadExt as _;
   use std::io;
 
   fn read_header(mut r: impl io::Read) -> io::Result<Header> {
