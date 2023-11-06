@@ -45,8 +45,10 @@ assert_eq!(256u16, swapped);
   }
   ```
 - This crate supports run-time endianness.
-- This crate supports [`futures::io`] and [`tokio::io`].
+- This crate supports [`futures::io`] and [`tokio::io`] via the `futures`
+  and `tokio` features respectively.
 - This crate only supports rust's built-in types, not, eg. [`u24`].
+- Both crates support `#![no_std]` by disabling the default `std` feature.
 
 [`byteorder`]: https://docs.rs/byteorder/1/byteorder/index.html
 [defining dozens of e.g write_uXX methods]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u8
