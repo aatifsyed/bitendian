@@ -2,6 +2,14 @@
 name = "bitendian"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Aatif Syed <aatif@aatifsyed.uk>"]
+description = "Ergonomic library for reading/writing numbers in big-endian and little-endian with async support."
+documentation = "https://docs.rs/bitendian"
+homepage = "https://github.com/aatifsyed/bitendian"
+repository = "https://github.com/aatifsyed/bitendian"
+categories = ["encoding", "parsing", "no-std", "asynchronous", "embedded"]
+keywords = ["endian", "binary", "async", "tokio", "futures"]
 
 [features]
 default = ["std"]
