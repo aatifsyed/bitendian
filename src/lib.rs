@@ -53,8 +53,10 @@
 //!   }
 //!   ```
 //! - This crate supports run-time endianness.
-//! - This crate supports [`futures::io`] and [`tokio::io`].
+//! - This crate supports [`futures::io`] and [`tokio::io`] via the `futures`
+//!   and `tokio` features respectively.
 //! - This crate only supports rust's built-in types, not, eg. [`u24`].
+//! - Both crates support `#![no_std]` by disabling the default `std` feature.
 //!
 //! [`byteorder`]: https://docs.rs/byteorder/1/byteorder/index.html
 //! [defining dozens of e.g write_uXX methods]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u8
@@ -62,10 +64,18 @@
 //! [`futures::io`]: https://docs.rs/futures/0.3/futures/io/
 //! [`tokio::io`]: https://docs.rs/tokio/1/tokio/io/index.html
 
+#![cfg_attr(do_doc_cfg, feature(doc_cfg))]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(rustdoc::redundant_explicit_links)] // required for `cargo-rdme`
 
+#[cfg(feature = "futures")]
+#[cfg_attr(do_doc_cfg, doc(cfg(feature = "futures")))]
 pub mod futures;
+#[cfg(feature = "std")]
+#[cfg_attr(do_doc_cfg, doc(cfg(feature = "std")))]
 pub mod io;
+#[cfg(feature = "tokio")]
+#[cfg_attr(do_doc_cfg, doc(cfg(feature = "tokio")))]
 pub mod tokio;
 
 /// A type that can be infallibly written to or read from an array in an
