@@ -1,15 +1,47 @@
 //! Convenience methods for encoding and decoding numbers in either big-endian
-//! or little-endian order.
+//! or little-endian.
 //!
-//! # Comparison with [`byteorder`](::byteorder).
-//! - This crate leverages type inference to [avoid defining dozens of write_uXX methods](::byteorder::WriteBytesExt).
-//! - This crate provides run-time endianness.
-//! - This crate only supports rust's built-in types, not, eg. [`u24`](::byteorder::WriteBytesExt::write_u24).
+//! # Comparison with [`byteorder`].
+//! - This crate leverages type inference to avoid [defining dozens of e.g write_uXX methods].
+//!   ```
+//!   use byteorder::{ReadBytesExt as _, BE, LE};
+//!   use byteorder2::io::ReadExt as _;
+//!   use std::io::Read;
+//!
+//!   # struct Header {
+//!   #     count: u16,
+//!   #     offset: i32,
+//!   # }
+//!   fn before(mut r: impl Read) -> Header {
+//!       Header {
+//!           count: r.read_u16::<BE>().unwrap(),
+//!                      // ^ this can be inferred
+//!           offset: r.read_i32::<LE>().unwrap()
+//!                             // ^ this shouldn't need a type parameter
+//!       }
+//!   }
+//!
+//!   fn after(mut r: impl Read) -> Header {
+//!       Header {
+//!           count: r.read_be().unwrap(),
+//!           offset: r.read_le().unwrap(),
+//!       }
+//!   }
+//!   ```
+//! - This crate support run-time endianness.
+//! - This crate only supports rust's built-in types, not, eg. [`u24`].
+//!
+//! [`byteorder`]: https://docs.rs/byteorder/1/byteorder/index.html
+//! [defining dozens of e.g write_uXX methods]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u8
+//! [`u24`]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u24
 
 pub mod io;
 
 /// A type that can be infallibly written to or read from an array in an
 /// [endian](Endian)-dependent manner.
+///
+/// This trait does not provide [`to_le`](u32::to_le) etc., since they can be
+/// found in [`num::Primint`](https://docs.rs/num/0.4/num/trait.PrimInt.html#tymethod.to_le).
 ///
 /// See the [module documentation](mod@self) for usage examples.
 pub trait ByteOrder<const N: usize> {
@@ -34,7 +66,7 @@ pub trait ByteOrder<const N: usize> {
     {
         match endian {
             Endian::Little => self.to_le_bytes(),
-            Endian::Big => self.to_be_bytes(),
+            Endian::Big | Endian::Network => self.to_be_bytes(),
             Endian::Native => self.to_ne_bytes(),
         }
     }
@@ -43,7 +75,7 @@ pub trait ByteOrder<const N: usize> {
     /// as a byte array in little endian.
     fn from_le_bytes(bytes: [u8; N]) -> Self;
     /// Create a native endian integer value from its representation
-    /// as a byte array in big endian.
+    /// as a byte array in big (network) endian.
     fn from_be_bytes(bytes: [u8; N]) -> Self;
     /// Create a native endian integer value from its memory representation
     /// as a byte array in native endianness.
@@ -60,7 +92,7 @@ pub trait ByteOrder<const N: usize> {
     {
         match endian {
             Endian::Little => Self::from_le_bytes(bytes),
-            Endian::Big => Self::from_be_bytes(bytes),
+            Endian::Big | Endian::Network => Self::from_be_bytes(bytes),
             Endian::Native => Self::from_ne_bytes(bytes),
         }
     }
@@ -117,7 +149,7 @@ byte_order!(16 { usize, isize });
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Endian {
     Little,
-    #[doc(alias = "Network")]
+    Network,
     Big,
     #[default]
     Native,
