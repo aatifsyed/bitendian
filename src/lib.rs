@@ -28,12 +28,14 @@
 //!       }
 //!   }
 //!   ```
-//! - This crate support run-time endianness.
+//! - This crate supports run-time endianness.
+//! - This crate supports [`futures::io`].
 //! - This crate only supports rust's built-in types, not, eg. [`u24`].
 //!
 //! [`byteorder`]: https://docs.rs/byteorder/1/byteorder/index.html
 //! [defining dozens of e.g write_uXX methods]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u8
 //! [`u24`]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u24
+//! [`futures::io`]: https://docs.rs/futures/0.3/futures/io/
 
 pub mod futures;
 pub mod io;
