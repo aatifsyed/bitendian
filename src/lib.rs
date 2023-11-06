@@ -39,6 +39,7 @@
 
 pub mod futures;
 pub mod io;
+pub mod tokio;
 
 /// A type that can be infallibly written to or read from an array in an
 /// [endian](Endian)-dependent manner.

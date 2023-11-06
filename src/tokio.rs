@@ -1,5 +1,5 @@
 use super::*;
-use futures_io::{AsyncRead, AsyncWrite};
+use ::tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use pin_project::pin_project;
 use std::{
     future::Future,
@@ -29,8 +29,9 @@ where
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut this = self.as_mut().project();
         loop {
-            let buf = &mut this.buffer[*this.progress..];
-            let progress = ready!(this.reader.as_mut().poll_read(cx, buf))?;
+            let mut buf = ReadBuf::new(&mut this.buffer[*this.progress..]);
+            ready!(this.reader.as_mut().poll_read(cx, &mut buf))?;
+            let progress = buf.filled().len();
             if progress == 0 {
                 return Poll::Ready(Err(io::Error::from(io::ErrorKind::UnexpectedEof)));
             }
@@ -133,12 +134,12 @@ mod tests {
     use std::io::Write as _;
 
     use crate::{
-        futures::{AsyncReadExt as _, AsyncWriteExt as _},
         io::{ReadExt as _, WriteExt as _},
+        tokio::{AsyncReadExt as _, AsyncWriteExt as _},
     };
 
     use super::*;
-    use ::futures::{executor::block_on, AsyncWriteExt};
+    use ::tokio::{io::AsyncWriteExt as _, runtime};
     use tempfile::NamedTempFile;
     const LOWER: i64 = -500_000;
     const UPPER: i64 = 500_000;
@@ -152,14 +153,18 @@ mod tests {
                 f.write_endian(it, endian).unwrap()
             }
             f.flush().unwrap();
-            let mut f = async_fs::File::from(f.reopen().unwrap());
+            // Performance is _awful_ if we don't use BufReader
+            let mut f = ::tokio::io::BufReader::with_capacity(
+                1021, /* prime */
+                ::tokio::fs::File::from(f.reopen().unwrap()),
+            );
             block_on(async {
                 assert_eq!(1u8, f.read_endian(endian).await.unwrap());
                 for expected in LOWER..UPPER {
                     let actual = f.read_endian(endian).await.unwrap();
                     assert_eq!(expected, actual)
                 }
-            })
+            });
         }
     }
 
@@ -168,7 +173,11 @@ mod tests {
         for endian in [Endian::Big, Endian::Little] {
             let mut f = NamedTempFile::new().unwrap();
             block_on(async {
-                let mut f = async_fs::File::from(f.reopen().unwrap());
+                // Performance is _awful_ if we don't use BufWriter
+                let mut f = ::tokio::io::BufWriter::with_capacity(
+                    1021, /* prime */
+                    ::tokio::fs::File::from(f.reopen().unwrap()),
+                );
                 f.write_endian(1u8, endian).await.unwrap();
                 for i in LOWER..UPPER {
                     f.write_endian(i, endian).await.unwrap();
@@ -181,5 +190,13 @@ mod tests {
                 assert_eq!(expected, actual);
             }
         }
+    }
+
+    fn block_on<T>(f: impl Future<Output = T>) -> T {
+        runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(f)
     }
 }
