@@ -1,5 +1,4 @@
-use super::*;
-use ::tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
+use crate::{ByteOrder, Endian};
 use pin_project::pin_project;
 use std::{
     future::Future,
@@ -8,6 +7,7 @@ use std::{
     pin::Pin,
     task::{ready, Context, Poll},
 };
+use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 #[pin_project]
 pub struct ReadEndian<const N: usize, R, T> {
@@ -136,13 +136,15 @@ mod tests {
     use crate::{
         io::{ReadExt as _, WriteExt as _},
         tokio::{AsyncReadExt as _, AsyncWriteExt as _},
+        Endian,
     };
 
-    use super::*;
-    use ::tokio::{io::AsyncWriteExt as _, runtime};
     use tempfile::NamedTempFile;
+    // Performance is _awful_ if we don't use buffered IO
+    use tokio::io::{AsyncWriteExt as _, BufReader, BufWriter};
     const LOWER: i64 = -500_000;
     const UPPER: i64 = 500_000;
+    const CAPACITY: usize = 1021; // prime
 
     #[test]
     fn read() {
@@ -153,11 +155,8 @@ mod tests {
                 f.write_endian(it, endian).unwrap()
             }
             f.flush().unwrap();
-            // Performance is _awful_ if we don't use BufReader
-            let mut f = ::tokio::io::BufReader::with_capacity(
-                1021, /* prime */
-                ::tokio::fs::File::from(f.reopen().unwrap()),
-            );
+            let mut f =
+                BufReader::with_capacity(CAPACITY, tokio::fs::File::from(f.reopen().unwrap()));
             block_on(async {
                 assert_eq!(1u8, f.read_endian(endian).await.unwrap());
                 for expected in LOWER..UPPER {
@@ -173,11 +172,8 @@ mod tests {
         for endian in [Endian::Big, Endian::Little] {
             let mut f = NamedTempFile::new().unwrap();
             block_on(async {
-                // Performance is _awful_ if we don't use BufWriter
-                let mut f = ::tokio::io::BufWriter::with_capacity(
-                    1021, /* prime */
-                    ::tokio::fs::File::from(f.reopen().unwrap()),
-                );
+                let mut f =
+                    BufWriter::with_capacity(CAPACITY, tokio::fs::File::from(f.reopen().unwrap()));
                 f.write_endian(1u8, endian).await.unwrap();
                 for i in LOWER..UPPER {
                     f.write_endian(i, endian).await.unwrap();
@@ -192,8 +188,8 @@ mod tests {
         }
     }
 
-    fn block_on<T>(f: impl Future<Output = T>) -> T {
-        runtime::Builder::new_current_thread()
+    fn block_on<T>(f: impl std::future::Future<Output = T>) -> T {
+        tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .unwrap()

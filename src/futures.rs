@@ -1,4 +1,4 @@
-use super::*;
+use crate::{ByteOrder, Endian};
 use futures_io::{AsyncRead, AsyncWrite};
 use pin_project::pin_project;
 use std::{

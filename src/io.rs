@@ -1,6 +1,4 @@
-use crate::ByteOrder;
-
-use super::Endian;
+use crate::{ByteOrder, Endian};
 use std::io;
 
 pub trait ReadExt<const N: usize>: io::Read {
