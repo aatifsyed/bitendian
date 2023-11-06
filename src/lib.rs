@@ -1,12 +1,6 @@
 pub mod io;
 
-use core::{
-    borrow::{Borrow, BorrowMut},
-    hash::Hash,
-    ops::{Index, IndexMut},
-};
-
-pub trait ByteOrderedInt<const N: usize> {
+pub trait ByteOrder<const N: usize> {
     /// Return the memory representation of this integer as a byte array in
     /// little-endian byte order.
     fn to_le_bytes(self) -> [u8; N];
@@ -60,11 +54,11 @@ pub trait ByteOrderedInt<const N: usize> {
     }
 }
 
-macro_rules! byte_ordered_int {
+macro_rules! byte_order {
     ($($width:literal { $($ty:ty),* $(,)? }),* $(,)?) => {
         $( // each width
             $( // each type
-                impl ByteOrderedInt<$width> for $ty {
+                impl ByteOrder<$width> for $ty {
                     fn to_le_bytes(self) -> [u8; $width] {
                         <$ty>::to_le_bytes(self)
                     }
@@ -89,7 +83,24 @@ macro_rules! byte_ordered_int {
         )* // each width
     };
 }
-byte_ordered_int!(1{u8, i8});
+byte_order!(
+    1 { u8, i8 },
+    2 { u16, i16 },
+    4 { u32, i32, f32 },
+    8 { u64, i64, f64 },
+    16 { u128, i128 },
+);
+
+#[cfg(target_pointer_width = "8")]
+byte_order!(1 { usize, isize });
+#[cfg(target_pointer_width = "16")]
+byte_order!(2 { usize, isize });
+#[cfg(target_pointer_width = "32")]
+byte_order!(4 { usize, isize });
+#[cfg(target_pointer_width = "64")]
+byte_order!(8 { usize, isize });
+#[cfg(target_pointer_width = "128")]
+byte_order!(16 { usize, isize });
 
 // byte_ordered_int!(u8, u16, u32, u64, u128, usize);
 // byte_ordered_int!(i8, i16, i32, i64, i128, isize);
