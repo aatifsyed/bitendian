@@ -3,13 +3,13 @@
 Convenience methods for encoding and decoding numbers in either big-endian
 or little-endian.
 
-Primitive integers implement [`ByteOrder`](https://docs.rs/bitendian/latest/bitendian/trait.ByteOrder.html).
+Primitive integers implement [`BitEndian`](https://docs.rs/bitendian/latest/bitendian/trait.BitEndian.html).
 ```rust
-use bitendian::ByteOrder;
+use bitendian::BitEndian;
 
 let it: u16 = 256;
-assert_eq!(ByteOrder::to_be_bytes(it), [1, 0]);
-assert_eq!(ByteOrder::to_le_bytes(it), [0, 1]);
+assert_eq!(BitEndian::to_be_bytes(it), [1, 0]);
+assert_eq!(BitEndian::to_le_bytes(it), [0, 1]);
 ```
 
 Extension methods provide convenient readers and writers.

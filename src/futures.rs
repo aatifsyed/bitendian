@@ -13,7 +13,7 @@
 //! # futures::executor::block_on(doit()).unwrap()
 //! ```
 
-use crate::{ByteOrder, Endian};
+use crate::{BitEndian, Endian};
 use futures_io::{AsyncRead, AsyncWrite};
 use pin_project::pin_project;
 use std::{
@@ -38,7 +38,7 @@ pub struct ReadEndian<const N: usize, R, T> {
 impl<const N: usize, R, T> Future for ReadEndian<N, R, T>
 where
     R: AsyncRead,
-    T: ByteOrder<N>,
+    T: BitEndian<N>,
 {
     type Output = io::Result<T>;
 
@@ -76,19 +76,19 @@ impl<const N: usize, R, T> ReadEndian<N, R, T> {
 /// See [module docs](mod@self) for usage examples.
 pub trait AsyncReadExt<const N: usize>: AsyncRead + Unpin {
     /// Read according to a run-time endianness.
-    fn read_endian<T: ByteOrder<N>>(&mut self, endian: Endian) -> ReadEndian<N, &mut Self, T> {
+    fn read_endian<T: BitEndian<N>>(&mut self, endian: Endian) -> ReadEndian<N, &mut Self, T> {
         assert_future::<io::Result<T>, _>(ReadEndian::new(self, endian))
     }
     /// Read with [`Endian::Big`].
-    fn read_be<T: ByteOrder<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
+    fn read_be<T: BitEndian<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
         self.read_endian(Endian::Big)
     }
     /// Read with [`Endian::Little`].
-    fn read_le<T: ByteOrder<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
+    fn read_le<T: BitEndian<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
         self.read_endian(Endian::Little)
     }
     /// Read with [`Endian::Native`].
-    fn read_ne<T: ByteOrder<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
+    fn read_ne<T: BitEndian<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
         self.read_endian(Endian::Native)
     }
 }
@@ -124,7 +124,7 @@ where
 }
 
 impl<const N: usize, W> WriteArray<N, W> {
-    fn new(writer: W, it: impl ByteOrder<N>, endian: Endian) -> Self {
+    fn new(writer: W, it: impl BitEndian<N>, endian: Endian) -> Self {
         Self {
             writer,
             buffer: it.to_bytes_endian(endian),
@@ -139,19 +139,19 @@ impl<const N: usize, W> WriteArray<N, W> {
 /// See [module docs](mod@self) for usage examples.
 pub trait AsyncWriteExt<const N: usize>: AsyncWrite + Unpin {
     /// Write according to a run-time endianness.
-    fn write_endian<T: ByteOrder<N>>(&mut self, it: T, endian: Endian) -> WriteArray<N, &mut Self> {
+    fn write_endian<T: BitEndian<N>>(&mut self, it: T, endian: Endian) -> WriteArray<N, &mut Self> {
         assert_future::<io::Result<()>, _>(WriteArray::new(self, it, endian))
     }
     /// Write with [`Endian::Big`].
-    fn write_be<T: ByteOrder<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
+    fn write_be<T: BitEndian<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
         self.write_endian(it, Endian::Big)
     }
     /// Write with [`Endian::Little`].
-    fn write_le<T: ByteOrder<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
+    fn write_le<T: BitEndian<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
         self.write_endian(it, Endian::Little)
     }
     /// Write with [`Endian::Native`].
-    fn write_ne<T: ByteOrder<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
+    fn write_ne<T: BitEndian<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
         self.write_endian(it, Endian::Native)
     }
 }

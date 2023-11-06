@@ -1,13 +1,13 @@
 //! Convenience methods for encoding and decoding numbers in either big-endian
 //! or little-endian.
 //!
-//! Primitive integers implement [`ByteOrder`](crate::ByteOrder).
+//! Primitive integers implement [`BitEndian`](crate::BitEndian).
 //! ```
-//! use bitendian::ByteOrder;
+//! use bitendian::BitEndian;
 //!
 //! let it: u16 = 256;
-//! assert_eq!(ByteOrder::to_be_bytes(it), [1, 0]);
-//! assert_eq!(ByteOrder::to_le_bytes(it), [0, 1]);
+//! assert_eq!(BitEndian::to_be_bytes(it), [1, 0]);
+//! assert_eq!(BitEndian::to_le_bytes(it), [0, 1]);
 //! ```
 //!
 //! Extension methods provide convenient readers and writers.
@@ -85,7 +85,7 @@ pub mod tokio;
 /// found in [`num::Primint`](https://docs.rs/num/0.4/num/trait.PrimInt.html#tymethod.to_le).
 ///
 /// See the [module documentation](mod@self) for usage examples.
-pub trait ByteOrder<const N: usize> {
+pub trait BitEndian<const N: usize> {
     /// Return the memory representation of this integer as a byte array in
     /// little-endian byte order.
     fn to_le_bytes(self) -> [u8; N];
@@ -139,11 +139,11 @@ pub trait ByteOrder<const N: usize> {
     }
 }
 
-macro_rules! byte_order {
+macro_rules! bit_endian {
     ($($width:literal { $($ty:ty),* $(,)? }),* $(,)?) => {
         $( // each width
             $( // each type
-                impl ByteOrder<$width> for $ty {
+                impl BitEndian<$width> for $ty {
                     fn to_le_bytes(self) -> [u8; $width] {
                         <$ty>::to_le_bytes(self)
                     }
@@ -168,7 +168,7 @@ macro_rules! byte_order {
         )* // each width
     };
 }
-byte_order!(
+bit_endian!(
     1 { u8, i8 },
     2 { u16, i16 },
     4 { u32, i32, f32 },
@@ -177,15 +177,15 @@ byte_order!(
 );
 
 #[cfg(target_pointer_width = "8")]
-byte_order!(1 { usize, isize });
+bit_endian!(1 { usize, isize });
 #[cfg(target_pointer_width = "16")]
-byte_order!(2 { usize, isize });
+bit_endian!(2 { usize, isize });
 #[cfg(target_pointer_width = "32")]
-byte_order!(4 { usize, isize });
+bit_endian!(4 { usize, isize });
 #[cfg(target_pointer_width = "64")]
-byte_order!(8 { usize, isize });
+bit_endian!(8 { usize, isize });
 #[cfg(target_pointer_width = "128")]
-byte_order!(16 { usize, isize });
+bit_endian!(16 { usize, isize });
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Endian {
