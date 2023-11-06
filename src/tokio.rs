@@ -1,3 +1,18 @@
+//! Extension methods for asynchronous IO with [`tokio`](https://docs.rs/tokio/1/tokio/).
+//!
+//! ```
+//! use byteorder2::tokio::{AsyncReadExt as _, AsyncWriteExt as _};
+//!
+//! # async fn doit() -> std::io::Result<()> {
+//! let mut buf = vec![];
+//! buf.write_be(1u16).await?;
+//! let swapped = buf.as_slice().read_le().await?;
+//! assert_eq!(256u16, swapped);
+//! # Ok(())
+//! # }
+//! # futures::executor::block_on(doit()).unwrap()
+//! ```
+
 use crate::{ByteOrder, Endian};
 use pin_project::pin_project;
 use std::{
@@ -9,6 +24,7 @@ use std::{
 };
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
+/// Future for [`AsyncReadExt`], see that trait for more.
 #[pin_project]
 pub struct ReadEndian<const N: usize, R, T> {
     #[pin]
@@ -55,22 +71,31 @@ impl<const N: usize, R, T> ReadEndian<N, R, T> {
     }
 }
 
+/// Extends [`tokio::io::AsyncRead`](https://docs.rs/tokio/1/tokio/io/trait.AsyncRead.html)
+/// with methods for reading in an endian-dependant way.
+///
+/// See [module docs](mod@self) for usage examples.
 pub trait AsyncReadExt<const N: usize>: AsyncRead + Unpin {
+    /// Read according to a run-time endianness.
     fn read_endian<T: ByteOrder<N>>(&mut self, endian: Endian) -> ReadEndian<N, &mut Self, T> {
         assert_future::<io::Result<T>, _>(ReadEndian::new(self, endian))
     }
+    /// Read with [`Endian::Big`].
     fn read_be<T: ByteOrder<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
         self.read_endian(Endian::Big)
     }
+    /// Read with [`Endian::Little`].
     fn read_le<T: ByteOrder<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
         self.read_endian(Endian::Little)
     }
+    /// Read with [`Endian::Native`].
     fn read_ne<T: ByteOrder<N>>(&mut self) -> ReadEndian<N, &mut Self, T> {
         self.read_endian(Endian::Native)
     }
 }
 impl<const N: usize, R> AsyncReadExt<N> for R where R: AsyncRead + Unpin {}
 
+/// Future for [`AsyncWriteExt`], see that trait for more.
 #[pin_project]
 pub struct WriteArray<const N: usize, W> {
     #[pin]
@@ -109,16 +134,24 @@ impl<const N: usize, W> WriteArray<N, W> {
     }
 }
 
+/// Extends [`tokio::io::AsyncWrite`](https://docs.rs/tokio/1/tokio/io/trait.AsyncWrite.html)
+/// with methods for writing in an endian-dependent way.
+///
+/// See [module docs](mod@self) for usage examples.
 pub trait AsyncWriteExt<const N: usize>: AsyncWrite + Unpin {
+    /// Write according to a run-time endianness.
     fn write_endian<T: ByteOrder<N>>(&mut self, it: T, endian: Endian) -> WriteArray<N, &mut Self> {
         assert_future::<io::Result<()>, _>(WriteArray::new(self, it, endian))
     }
+    /// Write with [`Endian::Big`].
     fn write_be<T: ByteOrder<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
         self.write_endian(it, Endian::Big)
     }
+    /// Write with [`Endian::Little`].
     fn write_le<T: ByteOrder<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
         self.write_endian(it, Endian::Little)
     }
+    /// Write with [`Endian::Native`].
     fn write_ne<T: ByteOrder<N>>(&mut self, it: T) -> WriteArray<N, &mut Self> {
         self.write_endian(it, Endian::Native)
     }

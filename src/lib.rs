@@ -1,31 +1,55 @@
 //! Convenience methods for encoding and decoding numbers in either big-endian
 //! or little-endian.
 //!
+//! Primitive integers implement [`ByteOrder`](crate::ByteOrder).
+//! ```
+//! use byteorder2::ByteOrder;
+//!
+//! let it: u16 = 256;
+//! assert_eq!(ByteOrder::to_be_bytes(it), [1, 0]);
+//! assert_eq!(ByteOrder::to_le_bytes(it), [0, 1]);
+//! ```
+//!
+//! Extension methods provide convenient readers and writers.
+//! ```
+//! use byteorder2::{io::WriteExt as _, tokio::AsyncReadExt as _};
+//!
+//! # async fn doit() -> std::io::Result<()> {
+//! let mut buf = vec![];
+//! buf.write_be(1u16)?;
+//! let swapped = buf.as_slice().read_le().await?;
+//! assert_eq!(256u16, swapped);
+//! # Ok(())
+//! # }
+//! # futures::executor::block_on(doit()).unwrap();
+//! ```
+//!
 //! # Comparison with [`byteorder`].
 //! - This crate leverages type inference to avoid [defining dozens of e.g write_uXX methods].
 //!   ```
 //!   use byteorder::{ReadBytesExt as _, BE, LE};
 //!   use byteorder2::io::ReadExt as _;
-//!   use std::io::Read;
+//!   use std::io;
 //!
 //!   # struct Header {
 //!   #     count: u16,
 //!   #     offset: i32,
 //!   # }
-//!   fn before(mut r: impl Read) -> Header {
-//!       Header {
-//!           count: r.read_u16::<BE>().unwrap(),
+//!   fn read_header(mut r: impl io::Read) -> io::Result<Header> {
+//!   # let _: io::Result<_> =
+//!       // before...
+//!       Ok(Header {
+//!           count: r.read_u16::<BE>()?,
 //!                      // ^ this can be inferred
-//!           offset: r.read_i32::<LE>().unwrap()
+//!           offset: r.read_i32::<LE>()?
 //!                             // ^ this could be a plain method
-//!       }
-//!   }
-//!
-//!   fn after(mut r: impl Read) -> Header {
-//!       Header {
-//!           count: r.read_be().unwrap(),
-//!           offset: r.read_le().unwrap(),
-//!       }
+//!       })
+//!   # ;
+//!       // after
+//!       Ok(Header {
+//!           count: r.read_be()?,
+//!           offset: r.read_le()?,
+//!       })
 //!   }
 //!   ```
 //! - This crate supports run-time endianness.
@@ -37,6 +61,8 @@
 //! [`u24`]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u24
 //! [`futures::io`]: https://docs.rs/futures/0.3/futures/io/
 //! [`tokio::io`]: https://docs.rs/tokio/1/tokio/io/index.html
+
+#![allow(rustdoc::redundant_explicit_links)] // required for `cargo-rdme`
 
 pub mod futures;
 pub mod io;
@@ -153,9 +179,14 @@ byte_order!(16 { usize, isize });
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Endian {
+    /// Least Significant Byte first.
     Little,
-    Network,
+    /// Most Significant Byte first.
     Big,
+    /// Conventially used for exchange over a network.
+    /// Same as [`Endian::Big`]
+    Network,
+    /// The endianness of the current processor.
     #[default]
     Native,
 }
