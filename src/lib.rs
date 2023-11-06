@@ -1,5 +1,17 @@
+//! Convenience methods for encoding and decoding numbers in either big-endian
+//! or little-endian order.
+//!
+//! # Comparison with [`byteorder`](::byteorder).
+//! - This crate leverages type inference to [avoid defining dozens of write_uXX methods](::byteorder::WriteBytesExt).
+//! - This crate provides run-time endianness.
+//! - This crate only supports rust's built-in types, not, eg. [`u24`](::byteorder::WriteBytesExt::write_u24).
+
 pub mod io;
 
+/// A type that can be infallibly written to or read from an array in an
+/// [endian](Endian)-dependent manner.
+///
+/// See the [module documentation](mod@self) for usage examples.
 pub trait ByteOrder<const N: usize> {
     /// Return the memory representation of this integer as a byte array in
     /// little-endian byte order.
@@ -101,9 +113,6 @@ byte_order!(4 { usize, isize });
 byte_order!(8 { usize, isize });
 #[cfg(target_pointer_width = "128")]
 byte_order!(16 { usize, isize });
-
-// byte_ordered_int!(u8, u16, u32, u64, u128, usize);
-// byte_ordered_int!(i8, i16, i32, i64, i128, isize);
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Endian {
