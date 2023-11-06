@@ -1,7 +1,7 @@
 //! Extension methods for standard library IO.
 //!
 //! ```
-//! use byteorder2::io::{ReadExt as _, WriteExt as _};
+//! use bitendian::io::{ReadExt as _, WriteExt as _};
 //!
 //! # fn doit() -> std::io::Result<()> {
 //! let mut buf = vec![];

@@ -9,4 +9,4 @@ cargo build --features tokio
 cargo build --all-features
 
 RUSTDOCFLAGS="--cfg do_doc_cfg" cargo +nightly doc --all-features
-lychee target/doc/byteorder2/index.html
+lychee target/doc/bitendian/index.html

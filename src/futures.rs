@@ -1,7 +1,7 @@
 //! Extension methods for asynchronous IO with [`futures`](https://docs.rs/futures/0.3/futures/).
 //!
 //! ```
-//! use byteorder2::futures::{AsyncReadExt as _, AsyncWriteExt as _};
+//! use bitendian::futures::{AsyncReadExt as _, AsyncWriteExt as _};
 //!
 //! # async fn doit() -> std::io::Result<()> {
 //! let mut buf = vec![];

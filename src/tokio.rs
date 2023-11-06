@@ -1,7 +1,7 @@
 //! Extension methods for asynchronous IO with [`tokio`](https://docs.rs/tokio/1/tokio/).
 //!
 //! ```
-//! use byteorder2::tokio::{AsyncReadExt as _, AsyncWriteExt as _};
+//! use bitendian::tokio::{AsyncReadExt as _, AsyncWriteExt as _};
 //!
 //! # async fn doit() -> std::io::Result<()> {
 //! let mut buf = vec![];

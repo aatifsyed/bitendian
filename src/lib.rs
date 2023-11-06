@@ -3,7 +3,7 @@
 //!
 //! Primitive integers implement [`ByteOrder`](crate::ByteOrder).
 //! ```
-//! use byteorder2::ByteOrder;
+//! use bitendian::ByteOrder;
 //!
 //! let it: u16 = 256;
 //! assert_eq!(ByteOrder::to_be_bytes(it), [1, 0]);
@@ -12,7 +12,7 @@
 //!
 //! Extension methods provide convenient readers and writers.
 //! ```
-//! use byteorder2::{io::WriteExt as _, tokio::AsyncReadExt as _};
+//! use bitendian::{io::WriteExt as _, tokio::AsyncReadExt as _};
 //!
 //! # async fn doit() -> std::io::Result<()> {
 //! let mut buf = vec![];
@@ -28,7 +28,7 @@
 //! - This crate leverages type inference to avoid [defining dozens of e.g write_uXX methods].
 //!   ```
 //!   use byteorder::{ReadBytesExt as _, BE, LE};
-//!   use byteorder2::io::ReadExt as _;
+//!   use bitendian::io::ReadExt as _;
 //!   use std::io;
 //!
 //!   # struct Header {
