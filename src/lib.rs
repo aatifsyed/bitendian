@@ -35,6 +35,7 @@
 //! [defining dozens of e.g write_uXX methods]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u8
 //! [`u24`]: https://docs.rs/byteorder/1/byteorder/trait.WriteBytesExt.html#method.write_u24
 
+pub mod futures;
 pub mod io;
 
 /// A type that can be infallibly written to or read from an array in an
